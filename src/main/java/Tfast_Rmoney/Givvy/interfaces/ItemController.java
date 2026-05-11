@@ -3,10 +3,10 @@ package Tfast_Rmoney.Givvy.interfaces;
 import java.util.List;
 import java.util.Map;
 
-import Tfast_Rmoney.Givvy.core.Interest;
 import Tfast_Rmoney.Givvy.core.InterestDAO;
 import Tfast_Rmoney.Givvy.core.Item;
 import Tfast_Rmoney.Givvy.core.ItemDAO;
+import Tfast_Rmoney.Givvy.entities.Interest;
 import Tfast_Rmoney.Givvy.core.InterestDAO;
 
 import org.springframework.http.HttpStatus;

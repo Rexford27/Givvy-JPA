@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import Tfast_Rmoney.Givvy.core.Interest;
 import Tfast_Rmoney.Givvy.core.InterestDAO;
-import Tfast_Rmoney.Givvy.core.Offer;
 import Tfast_Rmoney.Givvy.core.OfferDAO;
+import Tfast_Rmoney.Givvy.entities.Interest;
+import Tfast_Rmoney.Givvy.entities.Offer;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferResponse;
 
 

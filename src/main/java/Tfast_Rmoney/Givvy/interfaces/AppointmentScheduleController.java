@@ -4,9 +4,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
-import Tfast_Rmoney.Givvy.core.AppointmentScheduling;
 import Tfast_Rmoney.Givvy.core.AppointmentSchedulingDAO;
-
+import Tfast_Rmoney.Givvy.entities.AppointmentScheduling;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import Tfast_Rmoney.Givvy.core.Interest;
 import Tfast_Rmoney.Givvy.core.User;
 import Tfast_Rmoney.Givvy.core.UserDao;
+import Tfast_Rmoney.Givvy.entities.Interest;
 import Tfast_Rmoney.Givvy.core.InterestDAO;
 import Tfast_Rmoney.Givvy.core.Item;
 import Tfast_Rmoney.Givvy.core.ItemDAO;
