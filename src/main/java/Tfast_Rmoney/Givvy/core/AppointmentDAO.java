@@ -3,6 +3,7 @@ package Tfast_Rmoney.Givvy.core;
 import org.springframework.stereotype.Repository;
 
 import Tfast_Rmoney.Givvy.entities.Appointment;
+import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -16,9 +17,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class AppointmentDAO {
 
     private JdbcTemplate jdbcTemplate;
-    private ItemDAO itemDao;
+    private ItemRepository itemDao;
 
-    public AppointmentDAO(JdbcTemplate jdbcTemplate, ItemDAO itemDao) {
+    public AppointmentDAO(JdbcTemplate jdbcTemplate, ItemRepository itemDao) {
         this.jdbcTemplate = jdbcTemplate;
         this.itemDao = itemDao;
     }

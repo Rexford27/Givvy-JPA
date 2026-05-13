@@ -5,6 +5,8 @@ import java.sql.SQLException; //handles sql error when theres error
 import org.jspecify.annotations.Nullable;
 import org.springframework.jdbc.core.RowMapper; //row mapper
 
+import Tfast_Rmoney.Givvy.entities.User;
+
 
 public class UserRowMapper implements RowMapper {
     @Override

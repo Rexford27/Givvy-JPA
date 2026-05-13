@@ -11,8 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import Tfast_Rmoney.Givvy.core.User;
-import Tfast_Rmoney.Givvy.core.Item;
 
 @Entity
 public class Interest {

@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Tfast_Rmoney.Givvy.entities.Interest;
+import Tfast_Rmoney.Givvy.entities.Item;
 import Tfast_Rmoney.Givvy.entities.Appointment;
 import Tfast_Rmoney.Givvy.entities.AppointmentScheduling;
 import Tfast_Rmoney.Givvy.entities.Offer;
-import Tfast_Rmoney.Givvy.core.User;
-import Tfast_Rmoney.Givvy.core.Item;
+import Tfast_Rmoney.Givvy.entities.User;
 
 public class InterestDTO {
     private Integer id;
