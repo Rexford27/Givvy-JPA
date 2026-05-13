@@ -8,6 +8,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import Tfast_Rmoney.Givvy.entities.Interest;
+
 @Repository
 public class InterestDAO {
 

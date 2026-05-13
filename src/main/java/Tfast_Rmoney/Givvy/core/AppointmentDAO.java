@@ -2,6 +2,8 @@ package Tfast_Rmoney.Givvy.core;
 
 import org.springframework.stereotype.Repository;
 
+import Tfast_Rmoney.Givvy.entities.Appointment;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;

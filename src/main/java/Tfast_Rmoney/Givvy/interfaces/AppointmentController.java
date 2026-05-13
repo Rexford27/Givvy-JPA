@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import Tfast_Rmoney.Givvy.core.Appointment;
 import Tfast_Rmoney.Givvy.core.AppointmentDAO;
 import Tfast_Rmoney.Givvy.core.AppointmentWithDetails;
+import Tfast_Rmoney.Givvy.entities.Appointment;
 
 @RestController
 @RequestMapping("/appointments")

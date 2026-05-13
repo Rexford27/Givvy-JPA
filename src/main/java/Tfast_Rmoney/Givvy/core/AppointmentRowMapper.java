@@ -2,6 +2,8 @@ package Tfast_Rmoney.Givvy.core;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import Tfast_Rmoney.Givvy.entities.Appointment;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

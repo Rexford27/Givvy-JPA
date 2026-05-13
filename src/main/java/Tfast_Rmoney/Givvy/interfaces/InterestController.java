@@ -14,11 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import Tfast_Rmoney.Givvy.core.Interest;
 import Tfast_Rmoney.Givvy.core.InterestDAO;
-import Tfast_Rmoney.Givvy.core.Offer;
 import Tfast_Rmoney.Givvy.core.OfferDAO;
+import Tfast_Rmoney.Givvy.entities.Interest;
+import Tfast_Rmoney.Givvy.entities.Offer;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferResponse;
+import Tfast_Rmoney.Givvy.services.InterestService;
 
 
 @RestController
@@ -27,12 +28,10 @@ import Tfast_Rmoney.Givvy.interfaces.dtos.OfferResponse;
 public class InterestController {
 
 
-    private InterestDAO interestDao;
-    private OfferDAO offerDao;
+    private InterestService interestService;
 
-    public InterestController(InterestDAO interestDao, OfferDAO offerDao) {
-        this.interestDao = interestDao;
-        this.offerDao = offerDao;
+    public InterestController(InterestService interestService) {
+        this.interestService = interestService;
     }
 
     @GetMapping(params = {"itemid"})
