@@ -2,78 +2,109 @@ package Tfast_Rmoney.Givvy.interfaces;
 
 import java.util.List;
 import java.util.Map;
-
-import Tfast_Rmoney.Givvy.core.InterestDAO;
-import Tfast_Rmoney.Givvy.core.Item;
-import Tfast_Rmoney.Givvy.core.ItemDAO;
-import Tfast_Rmoney.Givvy.entities.Interest;
-import Tfast_Rmoney.Givvy.core.InterestDAO;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import Tfast_Rmoney.Givvy.core.InterestDAO;
+import Tfast_Rmoney.Givvy.entities.Interest;
+import Tfast_Rmoney.Givvy.entities.Item;
+import Tfast_Rmoney.Givvy.interfaces.dtos.CreateItemRequest;
+import Tfast_Rmoney.Givvy.interfaces.dtos.ItemResponse;
+import Tfast_Rmoney.Givvy.services.ItemService;
 
 @RestController
 @RequestMapping("/items")
 @CrossOrigin(origins = "*")
 public class ItemController {
 
-    private ItemDAO itemDao;
-    private InterestDAO interestDao;
+    private final ItemService itemService;
+    private final InterestDAO interestDao;
 
-    public ItemController(ItemDAO itemdao, InterestDAO interestDao) {
-        this.itemDao = itemdao;
+    public ItemController(ItemService itemService, InterestDAO interestDao) {
+        this.itemService = itemService;
         this.interestDao = interestDao;
     }
 
     // POST /items
     @PostMapping
-    public ResponseEntity<String> createItem(@RequestBody Item item) {
+    public ResponseEntity<String> createItem(@RequestBody CreateItemRequest request) {
 
-        if (item.getDonorId() == null || item.getDonorId().isBlank()
-                || item.getTitle() == null || item.getTitle().isBlank()) {
-    //returning a response entity emplying that somthing is missing 
+        if (request.getDonorId() == null || request.getDonorId().isBlank()
+                || request.getTitle() == null || request.getTitle().isBlank()) {
+
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body("Missing donorId or title");
         }
 
-        String itemId = itemDao.save(item);
-//if we get another error we send the response entity to say we could not create item
-        if (itemId.equals("Error")) {
+        Optional<UUID> possibleDonorId = parseUuid(request.getDonorId());
+
+        if (possibleDonorId.isEmpty()) {
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Could not create item");
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid donorId format");
         }
 
-        return ResponseEntity.ok(itemId);
+        Item item = new Item();
+        item.setTitle(request.getTitle());
+        item.setDescription(request.getDescription());
+        item.setImageUrl(request.getImageUrl());
+
+        String itemId = itemService.saveItem(item, possibleDonorId.get());
+
+        if (itemId.equals("Invalid donor")) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Donor user not found");
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(itemId);
     }
 
     // GET /items/{itemId}
     @GetMapping("/{itemId}")
-    public ResponseEntity<Item> getItemById(@PathVariable String itemId) {
-        Item item = itemDao.findById(itemId);
+    public ResponseEntity<ItemResponse> getItemById(@PathVariable String itemId) {
 
-        if (item == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        Optional<UUID> possibleItemId = parseUuid(itemId);
+
+        if (possibleItemId.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
         }
-//returns the item in a jackson formatated jason 
-        return ResponseEntity.ok(item);
-    }
 
-    //to get all the items by a user go to user controller 
-    // // GET /users/{userId}/items
-    // @GetMapping("/users/{userId}/items")
-    // public ResponseEntity<List<Item>> getItemsByUser(@PathVariable String userId) {
-    //     return ResponseEntity.ok(itemDao.findByUser(userId));
-    // }
+        Optional<Item> possibleItem = itemService.findItemById(possibleItemId.get());
+
+        if (possibleItem.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .build();
+        }
+
+        ItemResponse response = new ItemResponse(possibleItem.get());
+
+        return ResponseEntity.ok(response);
+    }
 
     // PATCH /items/{itemId}/status
     @PatchMapping("/{itemId}/status")
     public ResponseEntity<String> updateStatus(
             @PathVariable String itemId,
             @RequestBody Map<String, String> body) {
+
+        Optional<UUID> possibleItemId = parseUuid(itemId);
+
+        if (possibleItemId.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid itemId format");
+        }
 
         String status = body.get("status");
 
@@ -83,9 +114,9 @@ public class ItemController {
                     .body("Missing status");
         }
 
-        int rows = itemDao.updateStatus(itemId, status);
+        boolean updated = itemService.updateStatus(possibleItemId.get(), status);
 
-        if (rows == 0) {
+        if (!updated) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("Item not found");
@@ -94,40 +125,99 @@ public class ItemController {
         return ResponseEntity.ok("Status updated");
     }
 
-    ////// check in with T-fast to see if it's compataible with his code 
-
+    // GET /items/{itemid}/interests
     @GetMapping("/{itemid}/interests")
     public ResponseEntity<List<Interest>> findInterestsForItem(@PathVariable String itemid) {
+
+        Optional<UUID> possibleItemId = parseUuid(itemid);
+
+        if (possibleItemId.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+
+        if (itemService.findItemById(possibleItemId.get()).isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .build();
+        }
+
         List<Interest> results = interestDao.findByItemId(itemid);
+
         return ResponseEntity.ok().body(results);
     }
-    
+
+    // POST /items/{itemid}/interests
     @PostMapping("/{itemid}/interests")
-    public ResponseEntity<String> expressInterest(@PathVariable String itemid, @RequestBody Interest interest) {
-        interest.setItemId(itemid);
-        int result = interestDao.expressInterest(interest);
-        if (result == 0) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error expressing interest");
+    public ResponseEntity<String> expressInterest(
+            @PathVariable String itemid,
+            @RequestBody Interest interest) {
+
+        Optional<UUID> possibleItemId = parseUuid(itemid);
+
+        if (possibleItemId.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid itemId format");
         }
+
+        if (itemService.findItemById(possibleItemId.get()).isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Item not found");
+        }
+
+        interest.setItemId(itemid);
+
+        int result = interestDao.expressInterest(interest);
+
+        if (result == 0) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error expressing interest");
+        }
+
         return ResponseEntity.ok().body("Interest expressed successfully");
     }
 
+    // DELETE /items/interests/{interestId}
     @DeleteMapping("/interests/{interestId}")
-    public ResponseEntity<String> removeInterest(@PathVariable int id, @PathVariable int interestId) {
+    public ResponseEntity<String> removeInterest(@PathVariable int interestId) {
+
         interestDao.removeInterest(interestId);
+
         return ResponseEntity.ok().body("Interest removed successfully");
     }
 
-    // DELETE /items/{itemId} - Cancel item (donor withdraws offer)
-    // Triggers cascade delete via foreign key constraints
+    // DELETE /items/{itemId}
     @DeleteMapping("/{itemId}")
     public ResponseEntity<String> cancelItem(@PathVariable String itemId) {
-        int result = itemDao.cancelItem(itemId);
-        if (result > 0) {
-            return ResponseEntity.ok().body("Item/offer cancelled successfully");
-        } else if (result == -1) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to cancel item");
+
+        Optional<UUID> possibleItemId = parseUuid(itemId);
+
+        if (possibleItemId.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body("Invalid itemId format");
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Item not found");
+
+        boolean deleted = itemService.cancelItem(possibleItemId.get());
+
+        if (!deleted) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Item not found");
+        }
+
+        return ResponseEntity.ok().body("Item/offer cancelled successfully");
+    }
+
+    private Optional<UUID> parseUuid(String value) {
+        try {
+            return Optional.of(UUID.fromString(value));
+        } catch (Exception ex) {
+            return Optional.empty();
+        }
     }
 }
