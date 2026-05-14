@@ -1,6 +1,5 @@
 package Tfast_Rmoney.Givvy.interfaces;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -9,8 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import Tfast_Rmoney.Givvy.core.InterestRepository;
-import Tfast_Rmoney.Givvy.entities.Interest;
 import Tfast_Rmoney.Givvy.entities.Item;
 import Tfast_Rmoney.Givvy.interfaces.dtos.CreateItemRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.ItemResponse;
@@ -22,14 +19,11 @@ import Tfast_Rmoney.Givvy.services.ItemService;
 public class ItemController {
 
     private final ItemService itemService;
-    private final InterestDAO interestDao;
 
-    public ItemController(ItemService itemService, InterestDAO interestDao) {
+    public ItemController(ItemService itemService) {
         this.itemService = itemService;
-        this.interestDao = interestDao;
     }
 
-    // POST /items
     @PostMapping
     public ResponseEntity<String> createItem(@RequestBody CreateItemRequest request) {
 
@@ -67,7 +61,6 @@ public class ItemController {
                 .body(itemId);
     }
 
-    // GET /items/{itemId}
     @GetMapping("/{itemId}")
     public ResponseEntity<ItemResponse> getItemById(@PathVariable String itemId) {
 
@@ -92,7 +85,6 @@ public class ItemController {
         return ResponseEntity.ok(response);
     }
 
-    // PATCH /items/{itemId}/status
     @PatchMapping("/{itemId}/status")
     public ResponseEntity<String> updateStatus(
             @PathVariable String itemId,
@@ -125,72 +117,6 @@ public class ItemController {
         return ResponseEntity.ok("Status updated");
     }
 
-    // GET /items/{itemid}/interests
-    @GetMapping("/{itemid}/interests")
-    public ResponseEntity<List<Interest>> findInterestsForItem(@PathVariable String itemid) {
-
-        Optional<UUID> possibleItemId = parseUuid(itemid);
-
-        if (possibleItemId.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
-        }
-
-        if (itemService.findItemById(possibleItemId.get()).isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .build();
-        }
-
-        List<Interest> results = interestDao.findByItemId(itemid);
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    // POST /items/{itemid}/interests
-    @PostMapping("/{itemid}/interests")
-    public ResponseEntity<String> expressInterest(
-            @PathVariable String itemid,
-            @RequestBody Interest interest) {
-
-        Optional<UUID> possibleItemId = parseUuid(itemid);
-
-        if (possibleItemId.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid itemId format");
-        }
-
-        if (itemService.findItemById(possibleItemId.get()).isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body("Item not found");
-        }
-
-        interest.setItemId(itemid);
-
-        int result = interestDao.expressInterest(interest);
-
-        if (result == 0) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error expressing interest");
-        }
-
-        return ResponseEntity.ok().body("Interest expressed successfully");
-    }
-
-    // DELETE /items/interests/{interestId}
-    @DeleteMapping("/interests/{interestId}")
-    public ResponseEntity<String> removeInterest(@PathVariable int interestId) {
-
-        interestDao.removeInterest(interestId);
-
-        return ResponseEntity.ok().body("Interest removed successfully");
-    }
-
-    // DELETE /items/{itemId}
     @DeleteMapping("/{itemId}")
     public ResponseEntity<String> cancelItem(@PathVariable String itemId) {
 
@@ -210,7 +136,7 @@ public class ItemController {
                     .body("Item not found");
         }
 
-        return ResponseEntity.ok().body("Item/offer cancelled successfully");
+        return ResponseEntity.ok("Item/offer cancelled successfully");
     }
 
     private Optional<UUID> parseUuid(String value) {
