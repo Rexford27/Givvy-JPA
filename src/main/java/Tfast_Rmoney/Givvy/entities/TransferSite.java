@@ -1,16 +1,42 @@
-package Tfast_Rmoney.Givvy.core;
+package Tfast_Rmoney.Givvy.entities;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "transfer_sites")
 public class TransferSite {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(name = "address_one")
     private String addressOne;
+
+    @Column(name = "address_two")
     private String addressTwo;
+
     private String city;
+
     private String state;
+
     private String zip;
+
+    @Column(name = "image_url")
     private String imageUrl;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
+    public TransferSite() {}
 
     public int getId() {
         return id;

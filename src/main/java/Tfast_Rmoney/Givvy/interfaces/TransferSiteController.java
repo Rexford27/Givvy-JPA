@@ -1,9 +1,13 @@
 package Tfast_Rmoney.Givvy.interfaces;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import Tfast_Rmoney.Givvy.core.TransferSite;
-import Tfast_Rmoney.Givvy.core.TransferSiteDAO;
+import Tfast_Rmoney.Givvy.entities.TransferSite;
+import Tfast_Rmoney.Givvy.interfaces.dtos.CreateTransferSiteRequest;
+import Tfast_Rmoney.Givvy.interfaces.dtos.TransferSiteResponse;
+import Tfast_Rmoney.Givvy.services.TransferSiteService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,68 +18,87 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class TransferSiteController {
 
-    private TransferSiteDAO dao;
+    private final TransferSiteService transferSiteService;
 
-    public TransferSiteController(TransferSiteDAO dao) {
-        this.dao = dao;
+    public TransferSiteController(TransferSiteService transferSiteService) {
+        this.transferSiteService = transferSiteService;
     }
 
     // POST /transfer-sites
-    // Creates a new safe transfer location.
     @PostMapping
-    public ResponseEntity<String> createTransferSite(@RequestBody TransferSite site) {
+    public ResponseEntity<String> createTransferSite(@RequestBody CreateTransferSiteRequest request) {
 
-        // Basic validation so we do not save an empty location.
-        if (site.getName() == null || site.getName().isBlank()
-                || site.getAddressOne() == null || site.getAddressOne().isBlank()
-                || site.getCity() == null || site.getCity().isBlank()
-                || site.getState() == null || site.getState().isBlank()
-                || site.getZip() == null || site.getZip().isBlank()) {
+        if (request.getName() == null || request.getName().isBlank()
+                || request.getAddressOne() == null || request.getAddressOne().isBlank()
+                || request.getCity() == null || request.getCity().isBlank()
+                || request.getState() == null || request.getState().isBlank()
+                || request.getZip() == null || request.getZip().isBlank()) {
 
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .body("Missing name, address, city, state, or zip");
         }
 
-        int rows = dao.save(site);
+        TransferSite site = new TransferSite();
 
-        if (rows == 0) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Could not create transfer site");
-        }
+        site.setName(request.getName());
+        site.setAddressOne(request.getAddressOne());
+        site.setAddressTwo(request.getAddressTwo());
+        site.setCity(request.getCity());
+        site.setState(request.getState());
+        site.setZip(request.getZip());
+        site.setImageUrl(request.getImageUrl());
+        site.setDescription(request.getDescription());
 
-        return ResponseEntity.ok("Transfer site created");
+        int id = transferSiteService.saveTransferSite(site);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(String.valueOf(id));
     }
 
     // GET /transfer-sites
-    // Returns every transfer site.
     @GetMapping
-    public ResponseEntity<List<TransferSite>> getAllTransferSites() {
-        return ResponseEntity.ok(dao.findAll());
+    public ResponseEntity<List<TransferSiteResponse>> getAllTransferSites() {
+
+        List<TransferSite> sites = transferSiteService.findAllTransferSites();
+
+        List<TransferSiteResponse> response = new ArrayList<>();
+
+        for (TransferSite site : sites) {
+            response.add(new TransferSiteResponse(site));
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     // GET /transfer-sites/{id}
-    // Returns one transfer site by id.
     @GetMapping("/{id}")
-    public ResponseEntity<TransferSite> getTransferSiteById(@PathVariable int id) {
-        TransferSite site = dao.findById(id);
+    public ResponseEntity<TransferSiteResponse> getTransferSiteById(@PathVariable int id) {
 
-        if (site == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        Optional<TransferSite> possibleSite = transferSiteService.findTransferSiteById(id);
+
+        if (possibleSite.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .build();
         }
 
-        return ResponseEntity.ok(site);
+        TransferSiteResponse response = new TransferSiteResponse(possibleSite.get());
+
+        return ResponseEntity.ok(response);
     }
 
     // DELETE /transfer-sites/{id}
-    // Optional admin feature.
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteTransferSite(@PathVariable int id) {
-        int rows = dao.delete(id);
 
-        if (rows == 0) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Transfer site not found");
+        boolean deleted = transferSiteService.deleteTransferSite(id);
+
+        if (!deleted) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Transfer site not found");
         }
 
         return ResponseEntity.ok("Transfer site deleted");
