@@ -1,5 +1,6 @@
 package Tfast_Rmoney.Givvy.entities;
 
+import Tfast_Rmoney.Givvy.interfaces.dtos.OfferDTO;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +24,14 @@ public class Offer {
     private Integer status; // 0 = pending, 1 = accepted, 2 = rejected
 
     public Offer() {}
+
+    public Offer(OfferDTO dto) {
+        this.offer_id = dto.getOfferId();
+        
+        this.recipientId = dto.getRecipientId();
+        this.donorId = dto.getDonorId();
+        this.status = dto.getStatus();
+    }
 
     // Getters
     public Integer getOfferId() { 

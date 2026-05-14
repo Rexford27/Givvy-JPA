@@ -1,7 +1,9 @@
-package Tfast_Rmoney.Givvy.core;
+package Tfast_Rmoney.Givvy.interfaces.dtos;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+
+import Tfast_Rmoney.Givvy.entities.Appointment;
 
 public class AppointmentWithDetails {
     private Integer id;
@@ -21,6 +23,32 @@ public class AppointmentWithDetails {
     private String userName;
     private String userEmail;
 
+    public AppointmentWithDetails() {}
+
+    public AppointmentWithDetails(Appointment appointment) {
+        this.id = appointment.getId();
+        this.interestId = appointment.getInterest() != null ? appointment.getInterest().getId() : null;
+        this.locationId = appointment.getLocation() != null ? appointment.getLocation().getId() : null;
+        this.day = appointment.getDay();
+        this.time = appointment.getTime();
+
+        if (appointment.getInterest() != null) {
+            if (appointment.getInterest().getItem() != null) {
+                this.itemId = appointment.getInterest().getItem().getItemId().toString();
+                this.itemTitle = appointment.getInterest().getItem().getTitle();
+                this.donorId = appointment.getInterest().getItem().getDonor() != null 
+                    ? appointment.getInterest().getItem().getDonor().getUserId().toString() 
+                    : null;
+                this.status = appointment.getInterest().getItem().getStatus();
+            }
+            
+            if (appointment.getInterest().getUser() != null) {
+                this.userId = appointment.getInterest().getUser().getUserId().toString();
+                this.userName = appointment.getInterest().getUser().getName();
+                this.userEmail = appointment.getInterest().getUser().getEmail();
+            }
+        }
+    }
     // Getters
     public Integer getId() { return id; }
     public Integer getInterestId() { return interestId; }

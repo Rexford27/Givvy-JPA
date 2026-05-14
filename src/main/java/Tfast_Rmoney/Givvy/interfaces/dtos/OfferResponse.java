@@ -2,24 +2,24 @@ package Tfast_Rmoney.Givvy.interfaces.dtos;
 
 
 public class OfferResponse {
-    private String offerId;
+    private Integer offerId;
     private boolean accepted;
     private String respondedAt;
 
 
     public OfferResponse() {}
 
-    public OfferResponse(String offerId, boolean accepted, String respondedAt) {
+    public OfferResponse(Integer offerId, boolean accepted, String respondedAt) {
         this.offerId = offerId;
         this.accepted = accepted;
         this.respondedAt = respondedAt;
     }   
 
-    public String getOfferId() {
+    public Integer getOfferId() {
         return offerId;
     }
 
-    public void setOfferId(String offerId) {
+    public void setOfferId(Integer offerId) {
         this.offerId = offerId;
     }
 

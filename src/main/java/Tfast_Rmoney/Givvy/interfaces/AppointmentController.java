@@ -16,19 +16,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import Tfast_Rmoney.Givvy.core.AppointmentDAO;
-import Tfast_Rmoney.Givvy.core.AppointmentWithDetails;
 import Tfast_Rmoney.Givvy.entities.Appointment;
+import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentDTO;
+import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentWithDetails;
+import Tfast_Rmoney.Givvy.services.AppointmentService;
 
 @RestController
 @RequestMapping("/appointments")
 @CrossOrigin(origins = "*")
 public class AppointmentController {
 
-    private AppointmentDAO appointmentDAO;
+    private AppointmentService appointmentService;
 
-    public AppointmentController(AppointmentDAO appointmentDAO) {
-        this.appointmentDAO = appointmentDAO;
+    public AppointmentController(AppointmentService appointmentService) {
+        this.appointmentService = appointmentService;
     }
 
     @GetMapping(params = {"day", "locationId"})
@@ -36,40 +37,55 @@ public class AppointmentController {
             @RequestParam("day") LocalDate day,
             @RequestParam("locationId") Integer locationId) {
 
-        List<LocalTime> availableTimes = appointmentDAO.findAvailableTimes(day, locationId);
+        List<LocalTime> availableTimes = appointmentService.findAvailableTimes(day, locationId);
         return ResponseEntity.ok().body(availableTimes);
     }
 
     @PostMapping
-    public ResponseEntity<String> createAppointment(@RequestBody Appointment appointment) {
-        int createdAppointmentId = appointmentDAO.saveAppointment(appointment);
+    public ResponseEntity<String> createAppointment(@RequestBody AppointmentDTO appointment) {
+        int result = 0;
 
-        if (createdAppointmentId == -1) {
+        try{
+              result = appointmentService.saveAppointment(appointment);
+        }
+        catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to schedule appointment");
+        }
+      
+        if (result == -1) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid interest or location ID");
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body("Appointment successfully scheduled");
     }
 
+
     // DELETE /appointments/{id}/complete
     // Complete the exchange, then remove appointment/schedules/item.
     @DeleteMapping("/{id}/complete")
     public ResponseEntity<String> completeAppointment(@PathVariable Integer id) {
-        int result = appointmentDAO.completeAndDeleteAppointment(id);
 
-        if (result > 0) {
-            return ResponseEntity.ok().body("Exchange completed and appointment/schedules/item removed");
-        } else if (result == -1) {
+        int result = 0;
+
+        try{
+            result = appointmentService.completeAndDeleteAppointment(id);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to complete exchange");
         }
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Appointment not found");
+         if (result == -1) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Appointment not found with the provided ID");
+        }
+
+
+        return ResponseEntity.ok().body("Exchange completed and appointment/schedules/item removed");
+
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Appointment> getAppointment(@PathVariable("id") Integer id) {
-        Appointment appointment = appointmentDAO.getAppointmentById(id);
+    public ResponseEntity<AppointmentDTO> getAppointment(@PathVariable("id") Integer id) {
+        AppointmentDTO appointment = appointmentService.getAppointmentById(id);
 
         if (appointment == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -82,7 +98,7 @@ public class AppointmentController {
     // Get appointment with full details including item and recipient info.
     @GetMapping("/{id}/details")
     public ResponseEntity<AppointmentWithDetails> getAppointmentWithDetails(@PathVariable("id") Integer id) {
-        AppointmentWithDetails apptDetails = appointmentDAO.getAppointmentWithDetailsById(id);
+        AppointmentWithDetails apptDetails = appointmentService.getAppointmentDetails(id);
 
         if (apptDetails == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -92,8 +108,8 @@ public class AppointmentController {
     }
 
     @GetMapping(params = {"userId"})
-    public ResponseEntity<List<Appointment>> getAppointmentForUser(@RequestParam("userId") String userId) {
-        List<Appointment> appointments = appointmentDAO.getAppointmentForUser(userId);
+    public ResponseEntity<List<AppointmentDTO>> getAppointmentForUser(@RequestParam("userId") String userId) {
+        List<AppointmentDTO> appointments = appointmentService.getAppointmentsForUser(userId);
 
         if (appointments == null || appointments.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -105,13 +121,17 @@ public class AppointmentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteAppointment(@PathVariable("id") Integer id) {
-        int result = appointmentDAO.cancelAppointment(id);
 
-        if (result == -1) {
+        int result = 0;
+        try{
+               result = appointmentService.cancelAppointment(id);
+        }
+        catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to cancel appointment");
         }
+        
 
-        if (result == 0) {
+        if (result == -1) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Appointment not found");
         }
 
