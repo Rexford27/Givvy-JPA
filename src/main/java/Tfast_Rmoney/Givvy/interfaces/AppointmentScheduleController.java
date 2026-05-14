@@ -3,9 +3,11 @@ package Tfast_Rmoney.Givvy.interfaces;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-import Tfast_Rmoney.Givvy.core.AppointmentSchedulingDAO;
 import Tfast_Rmoney.Givvy.entities.AppointmentScheduling;
+import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentSchedulingDTO;
+import Tfast_Rmoney.Givvy.services.AppointmentSchedulingService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +19,19 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class AppointmentScheduleController {
 
-private AppointmentSchedulingDAO appointmentSchedulingDAO;
+private AppointmentSchedulingService appointmentSchedulingService;
 
 
-    public AppointmentScheduleController(AppointmentSchedulingDAO appointmentSchedulingDAO) {
-        this.appointmentSchedulingDAO = appointmentSchedulingDAO;
+    public AppointmentScheduleController(AppointmentSchedulingService appointmentSchedulingService) {
+        this.appointmentSchedulingService = appointmentSchedulingService;
     }
 
     @PostMapping
-    public ResponseEntity<String> proposeAppointmentSchedules(@RequestBody List<AppointmentScheduling> potentialAppts) {
+    public ResponseEntity<String> proposeAppointmentSchedules(@RequestBody List<AppointmentSchedulingDTO> potentialAppts) {
 
-        for(AppointmentScheduling appt_sched : potentialAppts) {
+        for(AppointmentSchedulingDTO appt_sched : potentialAppts) {
             try{
-                appointmentSchedulingDAO.proposeAppointment(appt_sched);
+                appointmentSchedulingService.proposeAppointment(appt_sched);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to propose appointment schedule");
             }
@@ -42,22 +44,22 @@ private AppointmentSchedulingDAO appointmentSchedulingDAO;
 
 
     @GetMapping(params = {"userId"})
-    public ResponseEntity<List<AppointmentScheduling>> getAppointmentSchedulesByUserId(@RequestParam("userId") String userId) {
-        List<AppointmentScheduling> appointmentSchedules = appointmentSchedulingDAO.getApptScheduleForUser(userId);
+    public ResponseEntity<List<AppointmentSchedulingDTO>> getAppointmentSchedulesByUserId(@RequestParam("userId") UUID userId) {
+        List<AppointmentSchedulingDTO> appointmentSchedules = appointmentSchedulingService.getApptSchedulesForUser(userId);
         return ResponseEntity.ok().body(appointmentSchedules);
     }
 
 
     @GetMapping(params = {"itemId"})
-    public ResponseEntity<List<AppointmentScheduling>> getAppointmentSchedulesByItem(@RequestParam("itemId") String itemId) {
-        List<AppointmentScheduling> appointmentSchedules = appointmentSchedulingDAO.getApptScheduleByItem(itemId);
+    public ResponseEntity<List<AppointmentSchedulingDTO>> getAppointmentSchedulesByItem(@RequestParam("itemId") UUID itemId) {
+        List<AppointmentSchedulingDTO> appointmentSchedules = appointmentSchedulingService.getApptSchedulesByItem(itemId);
         return ResponseEntity.ok().body(appointmentSchedules);
     }
 
     @DeleteMapping(params = {"scheduleId"})
     public ResponseEntity<String> deleteAppointmentSchedulesById(@RequestParam("scheduleId") Integer scheduleId) {
         try {
-            appointmentSchedulingDAO.removeAppointmentScheduleById(scheduleId);
+            appointmentSchedulingService.removeAppointmentScheduleById(scheduleId);
             return ResponseEntity.ok().body("Appointment schedule deleted successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete appointment schedule");
@@ -66,9 +68,9 @@ private AppointmentSchedulingDAO appointmentSchedulingDAO;
     }
 
     @DeleteMapping(params = {"itemId"})
-    public ResponseEntity<String> deleteAppointmentSchedulesByItem(@RequestParam("itemId") String itemId) {
+    public ResponseEntity<String> deleteAppointmentSchedulesByItem(@RequestParam("itemId") UUID itemId) {
         try {
-            appointmentSchedulingDAO.removeAppointmentScheduleByItemId(itemId);
+            appointmentSchedulingService.removeAppointmentScheduleByItemId(itemId);
             return ResponseEntity.ok().body("Appointment schedule deleted successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete appointment schedule");

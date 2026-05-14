@@ -5,7 +5,7 @@ import java.time.LocalTime;
 
 import Tfast_Rmoney.Givvy.entities.Appointment;
 import Tfast_Rmoney.Givvy.entities.Interest;
-import Tfast_Rmoney.Givvy.core.TransferSite;
+import Tfast_Rmoney.Givvy.entities.TransferSite;
 
 public class AppointmentDTO {
     private Integer id;

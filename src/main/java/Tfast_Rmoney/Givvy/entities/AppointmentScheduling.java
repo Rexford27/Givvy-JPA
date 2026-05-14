@@ -1,8 +1,10 @@
 package Tfast_Rmoney.Givvy.entities;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
-import Tfast_Rmoney.Givvy.core.TransferSite;
+import Tfast_Rmoney.Givvy.entities.TransferSite;
+import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentSchedulingDTO;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +26,24 @@ public class AppointmentScheduling {
     private LocalDateTime startTime;
 
     public AppointmentScheduling() {}
+
+    public AppointmentScheduling(AppointmentSchedulingDTO dto) {
+        this.id = dto.getId();
+        
+        if (dto.getInterestId() != null) {
+            Interest interest = new Interest();
+            interest.setId(dto.getInterestId());
+            this.interest = interest;
+        }
+        
+        if (dto.getLocationId() != null) {
+            TransferSite location = new TransferSite();
+            location.setId(dto.getLocationId());
+            this.location = location;
+        }
+        
+        this.startTime = dto.getStartTime() != null ? LocalDateTime.parse(dto.getStartTime()) : null;
+    }
 
     // Getters
     public Integer getId() { return id; }

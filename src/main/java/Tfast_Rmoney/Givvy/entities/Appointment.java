@@ -3,7 +3,8 @@ package Tfast_Rmoney.Givvy.entities;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import Tfast_Rmoney.Givvy.core.TransferSite;
+import Tfast_Rmoney.Givvy.entities.TransferSite;
+import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentDTO;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +29,7 @@ public class Appointment {
     private LocalTime time;
 
     public Appointment() {}
+
 
     // Getters
     public Integer getId() { 
