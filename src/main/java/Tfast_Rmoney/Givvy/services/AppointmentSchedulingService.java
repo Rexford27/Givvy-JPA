@@ -26,6 +26,11 @@ import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 import Tfast_Rmoney.Givvy.repositories.OfferRepository;
 import Tfast_Rmoney.Givvy.repositories.TransferSiteRepository;
 
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+
 
 @Service
 public class AppointmentSchedulingService {
@@ -48,24 +53,40 @@ public class AppointmentSchedulingService {
     @Autowired
     AppointmentSchedulingRepository appointmentSchedulingRepository;
 
+    @Autowired
+    EntityManager entityManager;
 
+
+    @Transactional
     public int proposeAppointment(AppointmentSchedulingDTO appointmentSchedulingDTO) {
-        Optional<Interest> interestOpt = interestRepository.findById(appointmentSchedulingDTO.getInterestId());
-        Optional<TransferSite> locationOpt = transferSiteRepository.findById(appointmentSchedulingDTO.getLocationId());
+        Integer interestId = appointmentSchedulingDTO.getInterestId();
+        Integer locationId = appointmentSchedulingDTO.getLocationId();
 
+  
+        Optional<Interest> interestOpt = interestRepository.findById(interestId);
+        Optional<TransferSite> locationOpt = transferSiteRepository.findById(locationId);
+        
         if (!interestOpt.isPresent() || !locationOpt.isPresent()) {
-            return -1; // Or throw an exception if you prefer
+            return -1;
         }
 
-        // Create and save the appointment
-        AppointmentScheduling appt = new AppointmentScheduling();
-        appt.setStartTime(appointmentSchedulingDTO.getStartTime() != null ? LocalDateTime.parse(appointmentSchedulingDTO.getStartTime()) : null);
-        appt.setLocation(locationOpt.get());
-        appt.setInterest(interestOpt.get());
+        try {
+            // Create and save the appointment
+            AppointmentScheduling appt = new AppointmentScheduling();
+            appt.setStartTime(appointmentSchedulingDTO.getStartTime() != null ? LocalDateTime.parse(appointmentSchedulingDTO.getStartTime()) : null);
+            appt.setLocation(locationOpt.get());
+            appt.setInterest(interestOpt.get());
 
-        appointmentSchedulingRepository.save(appt);
+            System.out.println("Created appointment: " + appt.getStartTime() + " at " + appt.getLocation().getName() + ", interestId=" + appt.getInterest().getId());
+            appointmentSchedulingRepository.save(appt);
 
-        return 1;
+            return 1;
+        } catch (Exception e) {
+            System.err.println("Error creating appointment scheduling: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        }
+
     }
 
     public List<AppointmentSchedulingDTO> getApptSchedulesForUser(UUID userId) {

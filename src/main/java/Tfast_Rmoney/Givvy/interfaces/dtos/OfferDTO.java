@@ -1,13 +1,16 @@
 package Tfast_Rmoney.Givvy.interfaces.dtos;
 
 import Tfast_Rmoney.Givvy.entities.Offer;
+
+import java.util.UUID;
+
 import Tfast_Rmoney.Givvy.entities.Interest;
 
 public class OfferDTO {
     private Integer offerId;
     private Integer interestId;
-    private String recipientId;
-    private String donorId;
+    private UUID recipientId;
+    private UUID donorId;
     private Integer status;
 
     public OfferDTO() {}
@@ -41,19 +44,19 @@ public class OfferDTO {
         this.interestId = interestId;
     }
 
-    public String getRecipientId() {
+    public UUID getRecipientId() {
         return recipientId;
     }
 
-    public void setRecipientId(String recipientId) {
+    public void setRecipientId(UUID recipientId) {
         this.recipientId = recipientId;
     }
 
-    public String getDonorId() {
+    public UUID getDonorId() {
         return donorId;
     }
 
-    public void setDonorId(String donorId) {
+    public void setDonorId(UUID donorId) {
         this.donorId = donorId;
     }
 

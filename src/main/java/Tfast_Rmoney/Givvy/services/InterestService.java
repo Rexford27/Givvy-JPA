@@ -87,6 +87,7 @@ public Integer expressInterest(InterestDTO interest) {
         return -1; // Or throw an exception if you prefer
     }
 
+
     newInterest.setItem(itemOpt.get());
     newInterest.setExpressedAt(interest.getExpressedAt() != null ? LocalDateTime.parse(interest.getExpressedAt()) : null);
 
@@ -164,6 +165,10 @@ public int saveOffer(OfferDTO offer) {
         return -1; // Or throw an exception if you prefer
     }
     newOffer.setInterest(interestOpt.get());
+
+    Item item = interestOpt.get().getItem();
+    item.setStatus("pending");
+    itemRepository.save(item);
 
     offerRepository.save(newOffer);
 

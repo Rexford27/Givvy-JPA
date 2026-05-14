@@ -29,13 +29,18 @@ private AppointmentSchedulingService appointmentSchedulingService;
     @PostMapping
     public ResponseEntity<String> proposeAppointmentSchedules(@RequestBody List<AppointmentSchedulingDTO> potentialAppts) {
 
+        int result = 0;
         for(AppointmentSchedulingDTO appt_sched : potentialAppts) {
             try{
-                appointmentSchedulingService.proposeAppointment(appt_sched);
+                result = appointmentSchedulingService.proposeAppointment(appt_sched);
             } catch (Exception e) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to propose appointment schedule");
             }
 
+        }
+
+        if(result == -1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid interest ID or location ID");
         }
 
         return ResponseEntity.ok().body("All appointment schedules proposed successfully");

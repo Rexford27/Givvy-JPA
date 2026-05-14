@@ -3,6 +3,7 @@ package Tfast_Rmoney.Givvy.interfaces;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +68,8 @@ public class AppointmentController {
 
         int result = 0;
 
+        
+
         try{
             result = appointmentService.completeAndDeleteAppointment(id);
         } catch (Exception e) {
@@ -108,7 +111,7 @@ public class AppointmentController {
     }
 
     @GetMapping(params = {"userId"})
-    public ResponseEntity<List<AppointmentDTO>> getAppointmentForUser(@RequestParam("userId") String userId) {
+    public ResponseEntity<List<AppointmentDTO>> getAppointmentForUser(@RequestParam("userId") UUID userId) {
         List<AppointmentDTO> appointments = appointmentService.getAppointmentsForUser(userId);
 
         if (appointments == null || appointments.isEmpty()) {

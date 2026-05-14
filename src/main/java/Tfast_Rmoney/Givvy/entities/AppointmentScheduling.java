@@ -28,19 +28,6 @@ public class AppointmentScheduling {
     public AppointmentScheduling() {}
 
     public AppointmentScheduling(AppointmentSchedulingDTO dto) {
-        this.id = dto.getId();
-        
-        if (dto.getInterestId() != null) {
-            Interest interest = new Interest();
-            interest.setId(dto.getInterestId());
-            this.interest = interest;
-        }
-        
-        if (dto.getLocationId() != null) {
-            TransferSite location = new TransferSite();
-            location.setId(dto.getLocationId());
-            this.location = location;
-        }
         
         this.startTime = dto.getStartTime() != null ? LocalDateTime.parse(dto.getStartTime()) : null;
     }

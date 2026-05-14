@@ -1,5 +1,7 @@
 package Tfast_Rmoney.Givvy.entities;
 
+import java.util.UUID;
+
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferDTO;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -17,9 +19,9 @@ public class Offer {
     @OneToOne
     private Interest interest;
     
-    private String recipientId;
+    private UUID recipientId;
     
-    private String donorId;
+    private UUID donorId;
     
     private Integer status; // 0 = pending, 1 = accepted, 2 = rejected
 
@@ -42,11 +44,11 @@ public class Offer {
         return interest; 
     }
     
-    public String getRecipientId() { 
+    public UUID getRecipientId() { 
         return recipientId; 
     }
     
-    public String getDonorId() { 
+    public UUID getDonorId() { 
         return donorId; 
     }
     
@@ -63,11 +65,11 @@ public class Offer {
         this.interest = interest; 
     }
     
-    public void setRecipientId(String recipientId) { 
+    public void setRecipientId(UUID recipientId) { 
         this.recipientId = recipientId; 
     }
     
-    public void setDonorId(String donorId) { 
+    public void setDonorId(UUID donorId) { 
         this.donorId = donorId; 
     }
     

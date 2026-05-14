@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 
 import Tfast_Rmoney.Givvy.entities.Appointment;
@@ -22,6 +23,7 @@ import Tfast_Rmoney.Givvy.repositories.InterestRepository;
 import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 import Tfast_Rmoney.Givvy.repositories.OfferRepository;
 import Tfast_Rmoney.Givvy.repositories.TransferSiteRepository;
+import jakarta.transaction.Transactional;
 
 
 @Service
@@ -98,6 +100,10 @@ public class AppointmentService {
             return -1;
         }
 
+        Item item = interestOpt.get().getItem();
+        item.setStatus("scheduled"); // Assuming 'pending' means "pending"
+        itemRepository.save(item);
+
         appointmentRepository.save(apptEntity);
         return 1;
     }
@@ -142,7 +148,7 @@ public class AppointmentService {
 
         }
 
-        public List<AppointmentDTO> getAppointmentsForUser(String userId) {
+        public List<AppointmentDTO> getAppointmentsForUser(UUID userId) {
             List<Appointment> appointments = appointmentRepository.getApptsForUsers(userId);
             List<AppointmentDTO> appointmentDTOs = new ArrayList<>();
 
@@ -153,6 +159,8 @@ public class AppointmentService {
             return appointmentDTOs;
         }
 
+        @Modifying
+        @Transactional
         public int completeAndDeleteAppointment(Integer id) {
             
             Optional<Appointment> apptOpt = appointmentRepository.findById(id);

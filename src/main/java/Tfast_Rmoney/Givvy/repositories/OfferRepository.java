@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import Tfast_Rmoney.Givvy.entities.Offer;
 
 public interface OfferRepository extends JpaRepository<Offer, Integer> {
+    
     Optional<List<Offer>> findByRecipientId(UUID recipientId);
     Optional<List<Offer>> findByDonorId(UUID donorId);
     void deleteByInterestId(Integer interestId);
