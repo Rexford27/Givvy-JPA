@@ -30,8 +30,8 @@ public class Offer {
     public Offer(OfferDTO dto) {
         this.offer_id = dto.getOfferId();
         
-        this.recipientId = dto.getRecipientId();
-        this.donorId = dto.getDonorId();
+        this.recipientId = UUID.fromString(dto.getRecipientId());
+        this.donorId = UUID.fromString(dto.getDonorId());
         this.status = dto.getStatus();
     }
 

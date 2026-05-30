@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import Tfast_Rmoney.Givvy.entities.Appointment;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentWithDetails;
+import Tfast_Rmoney.Givvy.security.AuctionUserDetails;
+import Tfast_Rmoney.Givvy.security.WrongUserException;
 import Tfast_Rmoney.Givvy.services.AppointmentService;
 
 @RestController
@@ -33,21 +36,23 @@ public class AppointmentController {
         this.appointmentService = appointmentService;
     }
 
-    @GetMapping(params = {"day", "locationId"})
-    public ResponseEntity<List<LocalTime>> getAvailableTimes(
-            @RequestParam("day") LocalDate day,
-            @RequestParam("locationId") Integer locationId) {
+    @GetMapping(value = "/available-times", params = {"day", "locationId"})
+    public ResponseEntity<List<LocalTime>> getAvailableTimes(@RequestParam("day") LocalDate day, @RequestParam("locationId") Integer locationId) {
 
         List<LocalTime> availableTimes = appointmentService.findAvailableTimes(day, locationId);
         return ResponseEntity.ok().body(availableTimes);
     }
 
     @PostMapping
-    public ResponseEntity<String> createAppointment(@RequestBody AppointmentDTO appointment) {
+    public ResponseEntity<String> createAppointment(Authentication authentication, @RequestBody AppointmentDTO appointment) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
 
         try{
-              result = appointmentService.saveAppointment(appointment);
+              result = appointmentService.saveAppointment(details.getUsername(), appointment);
+        }
+        catch(WrongUserException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to schedule appointment for this item");
         }
         catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to schedule appointment");
@@ -64,15 +69,16 @@ public class AppointmentController {
     // DELETE /appointments/{id}/complete
     // Complete the exchange, then remove appointment/schedules/item.
     @DeleteMapping("/{id}/complete")
-    public ResponseEntity<String> completeAppointment(@PathVariable Integer id) {
-
+    public ResponseEntity<String> completeAppointment(Authentication authentication, @PathVariable Integer id) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
 
-        
-
         try{
-            result = appointmentService.completeAndDeleteAppointment(id);
-        } catch (Exception e) {
+            result = appointmentService.completeAndDeleteAppointment(details.getUsername(), id);
+        } catch(WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to complete this appointment");
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to complete exchange");
         }
 
@@ -87,8 +93,18 @@ public class AppointmentController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<AppointmentDTO> getAppointment(@PathVariable("id") Integer id) {
-        AppointmentDTO appointment = appointmentService.getAppointmentById(id);
+    public ResponseEntity<AppointmentDTO> getAppointment(Authentication authentication, @PathVariable("id") Integer id) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+
+        AppointmentDTO appointment = null;
+        try{
+         appointment = appointmentService.getAppointmentById(details.getUsername(), id);
+        } catch(WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+         catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
 
         if (appointment == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -100,19 +116,29 @@ public class AppointmentController {
     // GET /appointments/{id}/details
     // Get appointment with full details including item and recipient info.
     @GetMapping("/{id}/details")
-    public ResponseEntity<AppointmentWithDetails> getAppointmentWithDetails(@PathVariable("id") Integer id) {
-        AppointmentWithDetails apptDetails = appointmentService.getAppointmentDetails(id);
+    public ResponseEntity<AppointmentWithDetails> getAppointmentWithDetails(Authentication authentication, @PathVariable("id") Integer id) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
 
-        if (apptDetails == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+
+        try {
+            AppointmentWithDetails apptDetails = appointmentService.getAppointmentDetails(details.getUsername(), id);
+            if (apptDetails == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            }
+            return ResponseEntity.ok().body(apptDetails);
+        } catch(WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
 
-        return ResponseEntity.ok().body(apptDetails);
     }
 
-    @GetMapping(params = {"userId"})
-    public ResponseEntity<List<AppointmentDTO>> getAppointmentForUser(@RequestParam("userId") UUID userId) {
-        List<AppointmentDTO> appointments = appointmentService.getAppointmentsForUser(userId);
+    @GetMapping
+    public ResponseEntity<List<AppointmentDTO>> getAppointmentForUser(Authentication authentication) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+
+        List<AppointmentDTO> appointments = appointmentService.getAppointmentsForUser(details.getUsername());
 
         if (appointments == null || appointments.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -123,11 +149,15 @@ public class AppointmentController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteAppointment(@PathVariable("id") Integer id) {
+    public ResponseEntity<String> deleteAppointment(Authentication authentication, @PathVariable("id") Integer id) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
 
         int result = 0;
         try{
-               result = appointmentService.cancelAppointment(id);
+               result = appointmentService.cancelAppointment(details.getUsername(), id);
+        }
+        catch(WrongUserException e){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to cancel this appointment");
         }
         catch(Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to cancel appointment");

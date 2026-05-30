@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import Tfast_Rmoney.Givvy.entities.Interest;
-import Tfast_Rmoney.Givvy.entities.Offer;
 import Tfast_Rmoney.Givvy.interfaces.dtos.InterestDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferResponse;
+import Tfast_Rmoney.Givvy.security.AuctionUserDetails;
+import Tfast_Rmoney.Givvy.security.WrongUserException;
 import Tfast_Rmoney.Givvy.services.InterestService;
 
 
@@ -49,7 +50,9 @@ public class InterestController {
     }
     
     @PostMapping
-    public ResponseEntity<String> expressInterest(@RequestBody InterestDTO interest) {
+    public ResponseEntity<String> expressInterest(Authentication authentication, @RequestBody InterestDTO interest) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        interest.setUserId(details.getUsername());
         int result = 0;
 
         try {
@@ -68,11 +71,14 @@ public class InterestController {
 
     
     @DeleteMapping("/{interestId}")
-    public ResponseEntity<String> removeInterest(@PathVariable Integer interestId) {
+    public ResponseEntity<String> removeInterest(Authentication authentication, @PathVariable Integer interestId) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
 
         try {
-            result = interestService.deleteInterest(interestId);
+            result = interestService.deleteInterest(details.getUsername(), interestId);
+        } catch (WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to delete this interest");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error removing interest");
         }
@@ -85,26 +91,31 @@ public class InterestController {
     }
     
 
-    @GetMapping(params = {"userId"})
-    public ResponseEntity<List<InterestDTO>> findInterestsForUser(@RequestParam("userId") UUID userId) {
-        List<InterestDTO> results = interestService.getInterestsByRecipientId(userId);
+    @GetMapping
+    public ResponseEntity<List<InterestDTO>> findInterestsForUser(Authentication authentication) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        List<InterestDTO> results = interestService.getInterestsByRecipientId(details.getUsername());
         return ResponseEntity.ok().body(results);
     }
 
-    @GetMapping(value ="/offers", params = {"recipientId"})
-    public ResponseEntity<List<OfferDTO>> getOffersForRecipient(@RequestParam("recipientId") UUID recipientId) {
-        List<OfferDTO> offers = interestService.getOffersByRecipientId(recipientId);
+    @GetMapping(value ="/offers/recipient")
+    public ResponseEntity<List<OfferDTO>> getOffersForRecipient(Authentication authentication) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        List<OfferDTO> offers = interestService.getOffersByRecipientId(details.getUsername());
         return ResponseEntity.ok().body(offers);
     }
 
-    @GetMapping(value = "/offers",params = {"donorId"})
-    public ResponseEntity<List<OfferDTO>> getOffersForDonor(@RequestParam("donorId") UUID donorId) {
-        List<OfferDTO> offers = interestService.getOffersByDonorId(donorId);
+    @GetMapping(value = "/offers/donor")
+    public ResponseEntity<List<OfferDTO>> getOffersForDonor(Authentication authentication) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        List<OfferDTO> offers = interestService.getOffersByDonorId(details.getUsername());
         return ResponseEntity.ok().body(offers);
     }
 
     @PostMapping("/offers")
-    public ResponseEntity<String> saveOffer(@RequestBody OfferDTO offer) {
+    public ResponseEntity<String> saveOffer(Authentication authentication, @RequestBody OfferDTO offer) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        offer.setDonorId(details.getUsername());
         int result = 0;
 
         try {
@@ -121,10 +132,13 @@ public class InterestController {
     }
 
     @DeleteMapping("/offers/{offerId}")
-    public ResponseEntity<String> deleteOffer(@PathVariable String offerId) {
+    public ResponseEntity<String> deleteOffer(Authentication authentication, @PathVariable Integer offerId) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
         try {
-            result = interestService.deleteOffer(Integer.parseInt(offerId));
+            result = interestService.deleteOffer(details.getUsername(), offerId);
+        } catch (WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to delete this offer");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting offer");
         }
@@ -137,13 +151,17 @@ public class InterestController {
     }
 
     @PostMapping("/offerresponse")
-    public ResponseEntity<String> updateOffer(@RequestBody OfferResponse offerRes) {
+    public ResponseEntity<String> updateOffer(Authentication authentication, @RequestBody OfferResponse offerRes) {
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
         try {
-            result = interestService.updateOffer(offerRes);
+            result = interestService.updateOffer(details.getUsername(), offerRes);
+        } catch (WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to update this offer");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating offer");
         }
+       
         if (result == -1) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Offer not found");
         }

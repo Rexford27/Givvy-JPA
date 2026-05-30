@@ -23,6 +23,7 @@ import Tfast_Rmoney.Givvy.repositories.InterestRepository;
 import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 import Tfast_Rmoney.Givvy.repositories.OfferRepository;
 import Tfast_Rmoney.Givvy.repositories.TransferSiteRepository;
+import Tfast_Rmoney.Givvy.security.WrongUserException;
 import jakarta.transaction.Transactional;
 
 
@@ -78,7 +79,7 @@ public class AppointmentService {
         return availableTimes;
     }
 
-    public int saveAppointment(AppointmentDTO appointment) {
+    public int saveAppointment(String userId, AppointmentDTO appointment) throws WrongUserException {
         Appointment apptEntity = new Appointment();
 
         apptEntity.setDay(appointment.getDay() != null ? LocalDate.parse(appointment.getDay()) : null);
@@ -101,6 +102,10 @@ public class AppointmentService {
         }
 
         Item item = interestOpt.get().getItem();
+        if(!item.getDonor().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
+        }
+
         item.setStatus("scheduled"); // Assuming 'pending' means "pending"
         itemRepository.save(item);
 
@@ -108,26 +113,35 @@ public class AppointmentService {
         return 1;
     }
 
-    public AppointmentDTO getAppointmentById(Integer id) {
+    public AppointmentDTO getAppointmentById(String userId, Integer id) throws WrongUserException {
         Optional<Appointment> apptOpt = appointmentRepository.findById(id);
 
         if (apptOpt.isPresent()) {
-            return new AppointmentDTO(apptOpt.get());
+            Appointment appt = apptOpt.get();
+            if(!appt.getInterest().getItem().getDonor().getUserId().toString().equals(userId) && !appt.getInterest().getUser().getUserId().toString().equals(userId)) {
+                throw new WrongUserException();
+            }
+            return new AppointmentDTO(appt);
         }
         return null;
     }
 
-    public AppointmentWithDetails getAppointmentDetails(Integer id) {
+    public AppointmentWithDetails getAppointmentDetails(String userId,Integer id) throws WrongUserException {
         Optional<Appointment> apptOpt = appointmentRepository.findById(id);
         
         if (apptOpt.isPresent()) {
-            AppointmentWithDetails appt = new AppointmentWithDetails(apptOpt.get());
-            return appt;
+            Appointment appt = apptOpt.get();
+            if(!appt.getInterest().getItem().getDonor().getUserId().toString().equals(userId) && !appt.getInterest().getUser().getUserId().toString().equals(userId)) {
+                throw new WrongUserException();
+            }
+
+            AppointmentWithDetails apptDets = new AppointmentWithDetails(appt);
+            return apptDets;
         }
         return null;
     }
 
-    public int cancelAppointment(Integer id) {
+    public int cancelAppointment(String userId, Integer id) throws WrongUserException {
         Optional<Appointment> apptOpt = appointmentRepository.findById(id);
         if (!apptOpt.isPresent()) {
             return -1; // Or throw an exception if you prefer
@@ -135,6 +149,9 @@ public class AppointmentService {
         Appointment appt = apptOpt.get();
         UUID itemId = appt.getInterest().getItem().getItemId();
 
+        if(!appt.getInterest().getItem().getDonor().getUserId().toString().equals(userId) && !appt.getInterest().getUser().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
+        }
         
         Optional<Item> item = itemRepository.findById(itemId);
             if (item.isPresent()) {
@@ -148,8 +165,8 @@ public class AppointmentService {
 
         }
 
-        public List<AppointmentDTO> getAppointmentsForUser(UUID userId) {
-            List<Appointment> appointments = appointmentRepository.getApptsForUsers(userId);
+        public List<AppointmentDTO> getAppointmentsForUser(String userId) {
+            List<Appointment> appointments = appointmentRepository.getApptsForUsers(UUID.fromString(userId));
             List<AppointmentDTO> appointmentDTOs = new ArrayList<>();
 
             for (Appointment appt : appointments) {
@@ -161,7 +178,7 @@ public class AppointmentService {
 
         @Modifying
         @Transactional
-        public int completeAndDeleteAppointment(Integer id) {
+        public int completeAndDeleteAppointment(String userId, Integer id) throws WrongUserException {
             
             Optional<Appointment> apptOpt = appointmentRepository.findById(id);
             if (!apptOpt.isPresent()) {
@@ -170,6 +187,10 @@ public class AppointmentService {
             Appointment appt = apptOpt.get();
             UUID itemId = appt.getInterest().getItem().getItemId();
             Integer interestId = appt.getInterest().getId();
+
+            if(!appt.getInterest().getItem().getDonor().getUserId().toString().equals(userId) && !appt.getInterest().getUser().getUserId().toString().equals(userId)) {
+                throw new WrongUserException();
+            }
 
             appointmentSchedulingRepository.deleteByInterestId(interestId);
 

@@ -16,6 +16,7 @@ import Tfast_Rmoney.Givvy.entities.AppointmentScheduling;
 import Tfast_Rmoney.Givvy.entities.Interest;
 import Tfast_Rmoney.Givvy.entities.Item;
 import Tfast_Rmoney.Givvy.entities.TransferSite;
+import Tfast_Rmoney.Givvy.entities.User;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentSchedulingDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentWithDetails;
@@ -25,6 +26,8 @@ import Tfast_Rmoney.Givvy.repositories.InterestRepository;
 import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 import Tfast_Rmoney.Givvy.repositories.OfferRepository;
 import Tfast_Rmoney.Givvy.repositories.TransferSiteRepository;
+import Tfast_Rmoney.Givvy.repositories.UserRepository;
+import Tfast_Rmoney.Givvy.security.WrongUserException;
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,14 +54,38 @@ public class AppointmentSchedulingService {
     OfferRepository offerRepository;
 
     @Autowired
+     UserRepository userRepository;
+
+    @Autowired
     AppointmentSchedulingRepository appointmentSchedulingRepository;
 
     @Autowired
     EntityManager entityManager;
 
 
+    // public void checkUserAuthorization(String userId, AppointmentSchedulingDTO appt) throws Exception {
+    //     Optional<Interest> interestOpt = interestRepository.findById(appt.getInterestId());
+    //     if (!interestOpt.isPresent()) {
+    //         throw new Exception("Interest not found for appointment scheduling");
+    //     }
+
+    //     Optional<Item> itemOpt = itemRepository.findById(interestOpt.get().getItem().getItemId());
+    //     if (!itemOpt.isPresent()) {
+    //         throw new Exception("Item not found for appointment scheduling");
+    //     }
+
+    //     // Optional<User> recipientOpt = userRepository.findById(interestOpt.get().getUser().getUserId());
+    //     // if (!recipientOpt.isPresent()) {
+    //     //     throw new Exception("Recipient user not found for appointment scheduling");
+    //     // }
+
+    //     if (!itemOpt.get().getDonor().getUserId().toString().equals(userId)) {
+    //         throw new WrongUserException();
+    //     }
+    // }
+
     @Transactional
-    public int proposeAppointment(AppointmentSchedulingDTO appointmentSchedulingDTO) {
+    public int proposeAppointment(String userId, AppointmentSchedulingDTO appointmentSchedulingDTO) throws WrongUserException {
         Integer interestId = appointmentSchedulingDTO.getInterestId();
         Integer locationId = appointmentSchedulingDTO.getLocationId();
 
@@ -68,6 +95,10 @@ public class AppointmentSchedulingService {
         
         if (!interestOpt.isPresent() || !locationOpt.isPresent()) {
             return -1;
+        }
+
+        if(!interestOpt.get().getItem().getDonor().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
         }
 
         try {
@@ -89,9 +120,9 @@ public class AppointmentSchedulingService {
 
     }
 
-    public List<AppointmentSchedulingDTO> getApptSchedulesForUser(UUID userId) {
+    public List<AppointmentSchedulingDTO> getApptSchedulesForUser(String userId) {
 
-        List<AppointmentScheduling> appointments = appointmentSchedulingRepository.getApptSchedulesForUsers(userId);
+        List<AppointmentScheduling> appointments = appointmentSchedulingRepository.getApptSchedulesForUsers(UUID.fromString(userId));
         List<AppointmentSchedulingDTO> appointmentDTOs = new ArrayList<>();
 
         for (AppointmentScheduling appt : appointments) {
@@ -102,7 +133,16 @@ public class AppointmentSchedulingService {
     }
 
 
-    public List<AppointmentSchedulingDTO> getApptSchedulesByItem(UUID itemId) {
+    public List<AppointmentSchedulingDTO> getApptSchedulesByItem(String userId, UUID itemId) throws WrongUserException {
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        if (!itemOpt.isPresent()) {
+            return new ArrayList<>();
+        }
+
+        if(!itemOpt.get().getDonor().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
+        }
+
         List<AppointmentScheduling> appointments = appointmentSchedulingRepository.getApptSchedulesByItem(itemId);
         List<AppointmentSchedulingDTO> appointmentDTOs = new ArrayList<>();
 
@@ -114,11 +154,29 @@ public class AppointmentSchedulingService {
     }
 
 
-    public void removeAppointmentScheduleById(Integer appointmentSchedulingId) {
-            appointmentSchedulingRepository.deleteById(appointmentSchedulingId);
+    public void removeAppointmentScheduleById(String userId, Integer appointmentSchedulingId) throws WrongUserException {
+        Optional<AppointmentScheduling> apptOpt = appointmentSchedulingRepository.findById(appointmentSchedulingId);
+        if (!apptOpt.isPresent()) {
+            return;
+        }
+
+        if(!apptOpt.get().getInterest().getItem().getDonor().getUserId().toString().equals(userId) && !apptOpt.get().getInterest().getUser().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
+        }
+
+        appointmentSchedulingRepository.deleteById(appointmentSchedulingId);
     }
 
-    public void removeAppointmentScheduleByItemId(UUID itemId) {
+    public void removeAppointmentScheduleByItemId(String userId, UUID itemId) throws WrongUserException {
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        if (!itemOpt.isPresent()) {
+            return;
+        }
+
+        if(!itemOpt.get().getDonor().getUserId().toString().equals(userId)) {
+            throw new WrongUserException();
+        }
+
         List<AppointmentScheduling> appointments = appointmentSchedulingRepository.getApptSchedulesByItem(itemId);
         for (AppointmentScheduling appt : appointments) {
             appointmentSchedulingRepository.deleteById(appt.getId());
