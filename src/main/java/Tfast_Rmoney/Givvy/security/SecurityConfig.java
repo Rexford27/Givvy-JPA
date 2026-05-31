@@ -27,7 +27,8 @@ public class SecurityConfig {
         .sessionManagement(management -> management
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(authorize -> authorize.requestMatchers(HttpMethod.POST, "/users", "/users/login").permitAll()
-        		.requestMatchers(HttpMethod.GET, "/auctions", "/auctions/{id}/bids").permitAll()
+        		.requestMatchers(HttpMethod.GET, "/interests/{itemid}").permitAll()
+                .requestMatchers(HttpMethod.GET,"/appointments/available-times").permitAll()
                 .requestMatchers(HttpMethod.GET,"/swagger-ui/*","/v3/api-docs","/v3/api-docs/*").permitAll()
                 .anyRequest().authenticated()
                 )

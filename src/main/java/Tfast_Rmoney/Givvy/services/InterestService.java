@@ -23,6 +23,7 @@ import Tfast_Rmoney.Givvy.entities.User;
 import Tfast_Rmoney.Givvy.interfaces.dtos.InterestDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferResponse;
+import Tfast_Rmoney.Givvy.security.WrongUserException;
 
 @Service
 public class InterestService {
@@ -46,9 +47,9 @@ private AppointmentRepository appointmentRepository;
 private AppointmentSchedulingRepository appointmentSchedulingRepository;
 
 
-public List<InterestDTO> getInterestsByRecipientId(UUID recipientId) {
+public List<InterestDTO> getInterestsByRecipientId(String recipientId) {
 
-    Optional<List<Interest>> interestsOpt = interestRepository.findByUserId(recipientId);
+    Optional<List<Interest>> interestsOpt = interestRepository.findByUserId(UUID.fromString(recipientId));
     List<InterestDTO> interestDTOs = new ArrayList<>();
     if(interestsOpt.isPresent()) {
         for(Interest interest : interestsOpt.get()) {
@@ -96,11 +97,16 @@ public Integer expressInterest(InterestDTO interest) {
 }
 
 
-public Integer deleteInterest(Integer interestId) {
+public Integer deleteInterest(String userId, Integer interestId) throws WrongUserException {
     Optional<Interest> interestOpt = interestRepository.findById(interestId);
     if (!interestOpt.isPresent()) {
         return -1; // Or throw an exception if you prefer
     }
+
+    if(!interestOpt.get().getUser().getUserId().toString().equals(userId)) {
+        throw new WrongUserException(); 
+    }
+
 
     Optional<Offer> offerOpt = offerRepository.getOfferByInterestId(interestId);
     if (offerOpt.isPresent()) {
@@ -133,8 +139,8 @@ public Integer deleteInterest(Integer interestId) {
 //     return offerRepository.getAcceptedOffer(itemId, recipientId);
 // }
 
-public List<OfferDTO> getOffersByRecipientId(UUID recipientId) {
-    Optional<List<Offer>> offersOpt = offerRepository.findByRecipientId(recipientId);
+public List<OfferDTO> getOffersByRecipientId(String recipientId) {
+    Optional<List<Offer>> offersOpt = offerRepository.findByRecipientId(UUID.fromString(recipientId));
     List<OfferDTO> offerDTOs = new ArrayList<>();
     if(offersOpt.isPresent()) {
         for(Offer offer : offersOpt.get()) {
@@ -145,8 +151,8 @@ public List<OfferDTO> getOffersByRecipientId(UUID recipientId) {
     return offerDTOs;
 }
 
-public List<OfferDTO> getOffersByDonorId(UUID donorId) {
-    Optional<List<Offer>> offersOpt = offerRepository.findByDonorId(donorId);
+public List<OfferDTO> getOffersByDonorId(String donorId) {
+    Optional<List<Offer>> offersOpt = offerRepository.findByDonorId(UUID.fromString(donorId.toString()));
     List<OfferDTO> offerDTOs = new ArrayList<>();
     if(offersOpt.isPresent()) {
         for(Offer offer : offersOpt.get()) {
@@ -176,12 +182,15 @@ public int saveOffer(OfferDTO offer) {
 
 }
 
-public int deleteOffer(Integer offerId) {
+public int deleteOffer(String donorId, Integer offerId) throws WrongUserException {
 
     Optional<Offer> offerOpt = offerRepository.findById(offerId);
 
     if (offerOpt.isPresent()) {
         Offer offer = offerOpt.get();
+        if(!offer.getRecipientId().toString().equals(donorId)) {
+            throw new WrongUserException(); // Or throw an exception if you prefer
+        }
 
         if(offer.getStatus() == 1) {
             Optional<Item> itemOpt = itemRepository.findById(offer.getInterest().getItem().getItemId());
@@ -206,11 +215,15 @@ public int deleteOffer(Integer offerId) {
 
 }
 
-public int updateOffer(OfferResponse offerRes) {
+public int updateOffer(String recipientId, OfferResponse offerRes) throws WrongUserException {
     Optional<Offer> offerOpt = offerRepository.findById(offerRes.getOfferId());
 
     if (offerOpt.isPresent()) {
         Offer offer = offerOpt.get();
+        if(!offer.getRecipientId().toString().equals(recipientId)) {
+            throw new WrongUserException(); // Or throw an exception if you prefer
+        }
+        
         if(offerRes.isAccepted()) {
             Optional<Item> itemOpt = itemRepository.findById(offer.getInterest().getItem().getItemId());
             if (itemOpt.isPresent()) {
