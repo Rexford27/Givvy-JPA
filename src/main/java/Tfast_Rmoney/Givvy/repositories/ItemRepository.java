@@ -10,7 +10,7 @@ import Tfast_Rmoney.Givvy.entities.User;
 
 public interface ItemRepository extends JpaRepository<Item, UUID> {
 
-    List<Item> findByDonor(User donor);
+   List<Item> findByDonor(User donor);
 
     List<Item> findByStatus(String status);
 }

@@ -165,15 +165,15 @@ public class AppointmentService {
 
         }
 
-        public List<AppointmentDTO> getAppointmentsForUser(String userId) {
-            List<Appointment> appointments = appointmentRepository.getApptsForUsers(UUID.fromString(userId));
-            List<AppointmentDTO> appointmentDTOs = new ArrayList<>();
+    public List<AppointmentDTO> getAppointmentsForUser(String userId) {
+        List<Appointment> appointments = appointmentRepository.getApptsForUsers(UUID.fromString(userId));
+        List<AppointmentDTO> appointmentDTOs = new ArrayList<>();
 
-            for (Appointment appt : appointments) {
-                appointmentDTOs.add(new AppointmentDTO(appt));
-            }
+        for (Appointment appt : appointments) {
+            appointmentDTOs.add(new AppointmentDTO(appt));
+        }
 
-            return appointmentDTOs;
+        return appointmentDTOs;
         }
 
         @Modifying
