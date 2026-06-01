@@ -44,30 +44,28 @@ public class ItemController {
     }
     
     @PostMapping
-    public ResponseEntity<String> createItem(@RequestBody CreateItemRequest request) {
+    public ResponseEntity<String> createItem(
+            Authentication authentication,
+            @RequestBody CreateItemRequest request
+    ) {
 
-        if (request.getDonorId() == null || request.getDonorId().isBlank()
-                || request.getTitle() == null || request.getTitle().isBlank()) {
+        // I use Authentication here because the donor should come from the JWT.
+        // I do not trust request.getDonorId() because someone could fake another user's id.
 
+        if (request.getTitle() == null || request.getTitle().isBlank()) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body("Missing donorId or title");
+                    .body("Missing title");
         }
 
-        Optional<UUID> possibleDonorId = parseUuid(request.getDonorId());
-
-        if (possibleDonorId.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid donorId format");
-        }
+        UUID loggedInUserId = getLoggedInUserId(authentication);
 
         Item item = new Item();
         item.setTitle(request.getTitle());
         item.setDescription(request.getDescription());
         item.setImageUrl(request.getImageUrl());
 
-        String itemId = itemService.saveItem(item, possibleDonorId.get());
+        String itemId = itemService.saveItem(item, loggedInUserId);
 
         if (itemId.equals("Invalid donor")) {
             return ResponseEntity
@@ -78,6 +76,27 @@ public class ItemController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(itemId);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ItemResponse>> getItems(
+            @RequestParam(required = false) String status
+    ) {
+
+        // I added this list endpoint so the REST Assured test can prove
+        // that a newly posted item appears in the offered/available item list.
+
+        List<Item> items;
+
+        if (status == null || status.isBlank()) {
+            items = itemService.findAllItems();
+        } else {
+            items = itemService.findItemsByStatus(status);
+        }
+
+        List<ItemResponse> response = convertToResponseList(items);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{itemId}")
@@ -106,8 +125,12 @@ public class ItemController {
 
     @PatchMapping("/{itemId}/status")
     public ResponseEntity<String> updateStatus(
+            Authentication authentication,
             @PathVariable String itemId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body
+    ) {
+
+        // I secure this route so only the donor who owns the item can update its status.
 
         Optional<UUID> possibleItemId = parseUuid(itemId);
 
@@ -125,19 +148,32 @@ public class ItemController {
                     .body("Missing status");
         }
 
-        boolean updated = itemService.updateStatus(possibleItemId.get(), status);
+        UUID loggedInUserId = getLoggedInUserId(authentication);
 
-        if (!updated) {
+        int result = itemService.updateStatus(possibleItemId.get(), loggedInUserId, status);
+
+        if (result == -1) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("Item not found");
+        }
+
+        if (result == -2) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You can only update your own item");
         }
 
         return ResponseEntity.ok("Status updated");
     }
 
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<String> cancelItem(@PathVariable String itemId) {
+    public ResponseEntity<String> cancelItem(
+            Authentication authentication,
+            @PathVariable String itemId
+    ) {
+
+        // I secure this route so only the donor who owns the item can cancel/delete it.
 
         Optional<UUID> possibleItemId = parseUuid(itemId);
 
@@ -147,15 +183,35 @@ public class ItemController {
                     .body("Invalid itemId format");
         }
 
-        boolean deleted = itemService.cancelItem(possibleItemId.get());
+        UUID loggedInUserId = getLoggedInUserId(authentication);
 
-        if (!deleted) {
+        int result = itemService.cancelItem(possibleItemId.get(), loggedInUserId);
+
+        if (result == -1) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("Item not found");
         }
 
+        if (result == -2) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("You can only cancel your own item");
+        }
+
         return ResponseEntity.ok("Item/offer cancelled successfully");
+    }
+
+    private UUID getLoggedInUserId(Authentication authentication) {
+
+        // I pull the logged-in user's identity out of the Authentication object.
+        // In this project, the principal is an AuctionUserDetails object.
+
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+
+        // In this project, getUsername() stores the user's UUID as a String.
+
+        return UUID.fromString(details.getUsername());
     }
 
     private Optional<UUID> parseUuid(String value) {
@@ -166,4 +222,17 @@ public class ItemController {
         }
     }
 
+<<<<<<< HEAD
 }
+=======
+    private List<ItemResponse> convertToResponseList(List<Item> items) {
+        List<ItemResponse> response = new ArrayList<>();
+
+        for (Item item : items) {
+            response.add(new ItemResponse(item));
+        }
+
+        return response;
+    }
+}
+>>>>>>> b00f398 (security working checkpoint)

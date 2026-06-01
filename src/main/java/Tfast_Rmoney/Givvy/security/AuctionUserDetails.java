@@ -15,7 +15,9 @@ public class AuctionUserDetails implements UserDetails {
 	
 	public AuctionUserDetails(String id) {
 		userid = id;
+		//holds the list of user details 
 		authorities = new ArrayList<GrantedAuthority>();
+		//we are adding user authority to the user details 
 		authorities.add(new SimpleGrantedAuthority("USER"));
 	}
 	
