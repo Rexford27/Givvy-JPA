@@ -86,6 +86,32 @@ public class ItemService {
         return true;
     }
 
+    public int updateStatus(UUID itemId, UUID donorId, String status) {
+
+        // I use this secure version when the controller knows who is logged in.
+        // Return meanings:
+        // 1 = updated
+        // -1 = item not found
+        // -2 = logged-in user is not the donor
+
+        Optional<Item> possibleItem = itemRepository.findById(itemId);
+
+        if (possibleItem.isEmpty()) {
+            return -1;
+        }
+
+        Item item = possibleItem.get();
+
+        if (!itemBelongsToDonor(item, donorId)) {
+            return -2;
+        }
+
+        item.setStatus(status);
+        itemRepository.save(item);
+
+        return 1;
+    }
+
     public boolean cancelItem(UUID itemId) {
 
         if (!itemRepository.existsById(itemId)) {
@@ -95,5 +121,39 @@ public class ItemService {
         itemRepository.deleteById(itemId);
 
         return true;
+    }
+
+    public int cancelItem(UUID itemId, UUID donorId) {
+
+        // I use this secure version when the controller knows who is logged in.
+        // Return meanings:
+        // 1 = deleted
+        // -1 = item not found
+        // -2 = logged-in user is not the donor
+
+        Optional<Item> possibleItem = itemRepository.findById(itemId);
+
+        if (possibleItem.isEmpty()) {
+            return -1;
+        }
+
+        Item item = possibleItem.get();
+
+        if (!itemBelongsToDonor(item, donorId)) {
+            return -2;
+        }
+
+        itemRepository.deleteById(itemId);
+
+        return 1;
+    }
+
+    private boolean itemBelongsToDonor(Item item, UUID donorId) {
+
+        if (item.getDonor() == null || item.getDonor().getUserId() == null) {
+            return false;
+        }
+
+        return item.getDonor().getUserId().equals(donorId);
     }
 }

@@ -107,6 +107,32 @@ public class MessageService {
         return true;
     }
 
+    public int markAsRead(UUID messageId, UUID loggedInUserId) {
+
+        // I use this secure version when the controller knows who is logged in.
+        // Return meanings:
+        // 1 = marked as read
+        // -1 = message not found
+        // -2 = logged-in user is not the recipient
+
+        Optional<Message> possibleMessage = messageRepository.findById(messageId);
+
+        if (possibleMessage.isEmpty()) {
+            return -1;
+        }
+
+        Message message = possibleMessage.get();
+
+        if (!isRecipient(message, loggedInUserId)) {
+            return -2;
+        }
+
+        message.setIsRead(true);
+        messageRepository.save(message);
+
+        return 1;
+    }
+
     public boolean deleteMessage(UUID messageId) {
 
         if (!messageRepository.existsById(messageId)) {
@@ -116,5 +142,48 @@ public class MessageService {
         messageRepository.deleteById(messageId);
 
         return true;
+    }
+
+    public int deleteMessage(UUID messageId, UUID loggedInUserId) {
+
+        // I use this secure version when the controller knows who is logged in.
+        // Return meanings:
+        // 1 = deleted
+        // -1 = message not found
+        // -2 = logged-in user is not sender or recipient
+
+        Optional<Message> possibleMessage = messageRepository.findById(messageId);
+
+        if (possibleMessage.isEmpty()) {
+            return -1;
+        }
+
+        Message message = possibleMessage.get();
+
+        if (!isSender(message, loggedInUserId) && !isRecipient(message, loggedInUserId)) {
+            return -2;
+        }
+
+        messageRepository.deleteById(messageId);
+
+        return 1;
+    }
+
+    private boolean isSender(Message message, UUID userId) {
+
+        if (message.getSender() == null || message.getSender().getUserId() == null) {
+            return false;
+        }
+
+        return message.getSender().getUserId().equals(userId);
+    }
+
+    private boolean isRecipient(Message message, UUID userId) {
+
+        if (message.getRecipient() == null || message.getRecipient().getUserId() == null) {
+            return false;
+        }
+
+        return message.getRecipient().getUserId().equals(userId);
     }
 }

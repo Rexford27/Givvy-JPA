@@ -7,11 +7,13 @@ import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import Tfast_Rmoney.Givvy.entities.Message;
 import Tfast_Rmoney.Givvy.interfaces.dtos.CreateMessageRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.MessageResponse;
+import Tfast_Rmoney.Givvy.security.AuctionUserDetails;
 import Tfast_Rmoney.Givvy.services.MessageService;
 
 @RestController
@@ -25,29 +27,28 @@ public class MessageController {
         this.messageService = messageService;
     }
 
-    // POST /messages
     @PostMapping
-    public ResponseEntity<String> createMessage(@RequestBody CreateMessageRequest request) {
+    public ResponseEntity<String> createMessage(
+            Authentication authentication,
+            @RequestBody CreateMessageRequest request
+    ) {
 
-        if (request.getSenderId() == null || request.getSenderId().isBlank()
-                || request.getRecipientId() == null || request.getRecipientId().isBlank()
+        // I use Authentication here because the sender should come from the JWT.
+        // I do not trust request.getSenderId() because someone could fake another sender.
+
+        if (request.getRecipientId() == null || request.getRecipientId().isBlank()
                 || request.getItemId() == null || request.getItemId().isBlank()
                 || request.getBody() == null || request.getBody().isBlank()) {
 
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body("Missing senderId, recipientId, itemId, or body");
+                    .body("Missing recipientId, itemId, or body");
         }
 
-        Optional<UUID> possibleSenderId = parseUuid(request.getSenderId());
+        UUID loggedInUserId = getLoggedInUserId(authentication);
+
         Optional<UUID> possibleRecipientId = parseUuid(request.getRecipientId());
         Optional<UUID> possibleItemId = parseUuid(request.getItemId());
-
-        if (possibleSenderId.isEmpty()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body("Invalid senderId format");
-        }
 
         if (possibleRecipientId.isEmpty()) {
             return ResponseEntity
@@ -67,7 +68,7 @@ public class MessageController {
 
         String key = messageService.saveMessage(
                 message,
-                possibleSenderId.get(),
+                loggedInUserId,
                 possibleRecipientId.get(),
                 possibleItemId.get()
         );
@@ -95,15 +96,27 @@ public class MessageController {
                 .body(key);
     }
 
-    // GET /messages/recipient/{userId}
     @GetMapping("/recipient/{userId}")
-    public ResponseEntity<List<MessageResponse>> getMessagesForRecipient(@PathVariable String userId) {
+    public ResponseEntity<List<MessageResponse>> getMessagesForRecipient(
+            Authentication authentication,
+            @PathVariable String userId
+    ) {
+
+        // I keep the same route, but the URL userId must match the JWT userId.
 
         Optional<UUID> possibleUserId = parseUuid(userId);
 
         if (possibleUserId.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+
+        UUID loggedInUserId = getLoggedInUserId(authentication);
+
+        if (!loggedInUserId.equals(possibleUserId.get())) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
                     .build();
         }
 
@@ -113,9 +126,13 @@ public class MessageController {
         return ResponseEntity.ok(response);
     }
 
-    // GET /messages/sender/{userId}
     @GetMapping("/sender/{userId}")
-    public ResponseEntity<List<MessageResponse>> getMessagesFromSender(@PathVariable String userId) {
+    public ResponseEntity<List<MessageResponse>> getMessagesFromSender(
+            Authentication authentication,
+            @PathVariable String userId
+    ) {
+
+        // I keep the same route, but the URL userId must match the JWT userId.
 
         Optional<UUID> possibleUserId = parseUuid(userId);
 
@@ -125,15 +142,27 @@ public class MessageController {
                     .build();
         }
 
+        UUID loggedInUserId = getLoggedInUserId(authentication);
+
+        if (!loggedInUserId.equals(possibleUserId.get())) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .build();
+        }
+
         List<Message> messages = messageService.findMessagesBySender(possibleUserId.get());
         List<MessageResponse> response = convertToResponseList(messages);
 
         return ResponseEntity.ok(response);
     }
 
-    // PATCH /messages/{messageId}/read
     @PatchMapping("/{messageId}/read")
-    public ResponseEntity<String> markAsRead(@PathVariable String messageId) {
+    public ResponseEntity<String> markAsRead(
+            Authentication authentication,
+            @PathVariable String messageId
+    ) {
+
+        // I only allow the recipient of the message to mark it as read.
 
         Optional<UUID> possibleMessageId = parseUuid(messageId);
 
@@ -143,20 +172,32 @@ public class MessageController {
                     .body("Invalid messageId format");
         }
 
-        boolean updated = messageService.markAsRead(possibleMessageId.get());
+        UUID loggedInUserId = getLoggedInUserId(authentication);
 
-        if (!updated) {
+        int result = messageService.markAsRead(possibleMessageId.get(), loggedInUserId);
+
+        if (result == -1) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("Message not found");
+        }
+
+        if (result == -2) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Only the recipient can mark this message as read");
         }
 
         return ResponseEntity.ok("Message marked as read");
     }
 
-    // DELETE /messages/{messageId}
     @DeleteMapping("/{messageId}")
-    public ResponseEntity<String> deleteMessage(@PathVariable String messageId) {
+    public ResponseEntity<String> deleteMessage(
+            Authentication authentication,
+            @PathVariable String messageId
+    ) {
+
+        // I only allow the sender or recipient to delete a message.
 
         Optional<UUID> possibleMessageId = parseUuid(messageId);
 
@@ -166,15 +207,33 @@ public class MessageController {
                     .body("Invalid messageId format");
         }
 
-        boolean deleted = messageService.deleteMessage(possibleMessageId.get());
+        UUID loggedInUserId = getLoggedInUserId(authentication);
 
-        if (!deleted) {
+        int result = messageService.deleteMessage(possibleMessageId.get(), loggedInUserId);
+
+        if (result == -1) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
                     .body("Message not found");
         }
 
+        if (result == -2) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body("Only the sender or recipient can delete this message");
+        }
+
         return ResponseEntity.ok("Message deleted");
+    }
+
+    private UUID getLoggedInUserId(Authentication authentication) {
+
+        // I pull the logged-in user's identity out of the Authentication object.
+        // In this project, the principal is an AuctionUserDetails object.
+
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+
+        return UUID.fromString(details.getUsername());
     }
 
     private Optional<UUID> parseUuid(String value) {
