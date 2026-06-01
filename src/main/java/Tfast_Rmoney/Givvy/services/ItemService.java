@@ -1,5 +1,6 @@
 package Tfast_Rmoney.Givvy.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import Tfast_Rmoney.Givvy.entities.Item;
 import Tfast_Rmoney.Givvy.entities.User;
+import Tfast_Rmoney.Givvy.interfaces.dtos.ItemResponse;
 import Tfast_Rmoney.Givvy.repositories.ItemRepository;
 import Tfast_Rmoney.Givvy.repositories.UserRepository;
 
@@ -54,7 +56,10 @@ public class ItemService {
 
         User user = possibleUser.get();
 
-        return itemRepository.findByDonor(user);
+        List<Item> items = itemRepository.findByDonor(user);
+        
+
+        return items;
     }
 
     public List<Item> findAllItems() {

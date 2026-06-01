@@ -120,6 +120,8 @@ public class InterestController {
 
         try {
             result = interestService.saveOffer(offer);
+        } catch (WrongUserException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User not authorized to make an offer on this interest");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving offer");
         }

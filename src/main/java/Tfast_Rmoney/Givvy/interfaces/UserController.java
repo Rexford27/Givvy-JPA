@@ -17,6 +17,7 @@ import Tfast_Rmoney.Givvy.interfaces.dtos.RegisterUserRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.UserResponse;
 import Tfast_Rmoney.Givvy.services.ItemService;
 import Tfast_Rmoney.Givvy.services.UserService;
+import Tfast_Rmoney.Givvy.security.JwtService;
 
 @RestController
 @RequestMapping("/users")
@@ -25,10 +26,12 @@ public class UserController {
 
     private final UserService userService;
     private final ItemService itemService;
+    private final JwtService jwtService;
 
-    public UserController(UserService userService, ItemService itemService) {
+    public UserController(UserService userService, ItemService itemService, JwtService jwtService) {
         this.userService = userService;
         this.itemService = itemService;
+        this.jwtService = jwtService;
     }
 
     // POST /users/login
@@ -54,7 +57,9 @@ public class UserController {
                     .body("Invalid email or password");
         }
 
-        return ResponseEntity.ok(result.get().getUserId().toString());
+        String token = jwtService.makeJwt(result.get().getUserId().toString());
+        return ResponseEntity.ok(token);
+        // return ResponseEntity.ok(result.get().getUserId().toString());
     }
 
     // POST /users

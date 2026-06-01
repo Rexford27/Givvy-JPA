@@ -163,12 +163,15 @@ public List<OfferDTO> getOffersByDonorId(String donorId) {
     return offerDTOs;
 }
 
-public int saveOffer(OfferDTO offer) {
+public int saveOffer(OfferDTO offer) throws WrongUserException {
     Offer newOffer = new Offer(offer);
 
     Optional<Interest> interestOpt = interestRepository.findById(offer.getInterestId());
     if (!interestOpt.isPresent()) {
         return -1; // Or throw an exception if you prefer
+    }
+    if(!offer.getDonorId().toString().equals(interestOpt.get().getItem().getDonor().getUserId().toString())) {
+        throw new WrongUserException(); // Or throw an exception if you prefer
     }
     newOffer.setInterest(interestOpt.get());
 

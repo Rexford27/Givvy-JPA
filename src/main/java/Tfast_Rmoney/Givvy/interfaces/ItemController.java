@@ -1,16 +1,21 @@
 package Tfast_Rmoney.Givvy.interfaces;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import Tfast_Rmoney.Givvy.entities.Item;
 import Tfast_Rmoney.Givvy.interfaces.dtos.CreateItemRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.ItemResponse;
+import Tfast_Rmoney.Givvy.security.AuctionUserDetails;
 import Tfast_Rmoney.Givvy.services.ItemService;
 
 @RestController
@@ -24,6 +29,20 @@ public class ItemController {
         this.itemService = itemService;
     }
 
+
+    @GetMapping
+    public ResponseEntity<List<ItemResponse>> getItemsByDonor(Authentication authentication){
+        AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
+        List<Item> items = itemService.findItemsByUser(UUID.fromString(details.getUsername()));
+
+        List<ItemResponse> itemResponses = new ArrayList<>();
+        for (Item item : items) {
+            itemResponses.add(new ItemResponse(item));
+        }
+
+        return ResponseEntity.ok(itemResponses);
+    }
+    
     @PostMapping
     public ResponseEntity<String> createItem(@RequestBody CreateItemRequest request) {
 
@@ -146,4 +165,5 @@ public class ItemController {
             return Optional.empty();
         }
     }
+
 }
