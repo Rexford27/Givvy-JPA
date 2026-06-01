@@ -14,7 +14,7 @@ import Tfast_Rmoney.Givvy.interfaces.dtos.RegisterUserRequest;
 import io.restassured.RestAssured;
 
 @SpringBootTest(classes=GivvyApplication.class,webEnvironment = WebEnvironment.DEFINED_PORT)
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 public class APISetupTests {
    
     private static RegisterUserRequest testDonor;

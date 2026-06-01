@@ -102,7 +102,7 @@ public class AppointmentService {
         }
 
         Item item = interestOpt.get().getItem();
-        if(!item.getDonor().getUserId().toString().equals(userId)) {
+        if(!item.getDonor().getUserId().toString().equals(userId) && !interestOpt.get().getUser().getUserId().toString().equals(userId)) {
             throw new WrongUserException();
         }
 
@@ -198,7 +198,7 @@ public class AppointmentService {
 
             offerRepository.deleteByInterestId(interestId);
 
-            interestRepository.deleteById(interestId);
+            interestRepository.deleteByItem_ItemId(itemId);
 
             itemRepository.deleteById(itemId);
                 
