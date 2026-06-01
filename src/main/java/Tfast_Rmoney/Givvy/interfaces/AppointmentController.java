@@ -69,7 +69,7 @@ public class AppointmentController {
     // DELETE /appointments/{id}/complete
     // Complete the exchange, then remove appointment/schedules/item.
     @DeleteMapping("/{id}/complete")
-    public ResponseEntity<String> completeAppointment(Authentication authentication, @PathVariable Integer id) {
+    public ResponseEntity<String> completeAppointment(Authentication authentication, @PathVariable("id") Integer id) {
         AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         int result = 0;
 
