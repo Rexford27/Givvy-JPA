@@ -15,6 +15,8 @@ import org.springframework.test.context.ActiveProfiles;
 import Tfast_Rmoney.Givvy.entities.User;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.AppointmentSchedulingDTO;
+import Tfast_Rmoney.Givvy.interfaces.dtos.CreateItemRequest;
+import Tfast_Rmoney.Givvy.interfaces.dtos.CreateTransferSiteRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.InterestDTO;
 import Tfast_Rmoney.Givvy.interfaces.dtos.LoginRequest;
 import Tfast_Rmoney.Givvy.interfaces.dtos.OfferDTO;
@@ -32,7 +34,7 @@ import java.util.UUID;
 import org.apache.tomcat.util.http.parser.Authorization;
 
 @SpringBootTest(classes=GivvyApplication.class,webEnvironment = WebEnvironment.DEFINED_PORT)
-//@ActiveProfiles("test")
+@ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class APIInterestandAppointmentTests {
 	private static LoginRequest testDonor;
@@ -69,6 +71,18 @@ public class APIInterestandAppointmentTests {
 	@Test
 	@Order(1)
 	public void prerequisites() {
+	
+	CreateTransferSiteRequest site = new CreateTransferSiteRequest();
+	site.setName("Test Location");
+	site.setAddressOne("123 Main St");
+	site.setCity("Anytown");
+	site.setState("MN");
+	site.setZip("12345");
+
+	CreateItemRequest item = new CreateItemRequest();
+	item.setTitle("Test Item");
+	item.setDescription("This is a test item.");
+	
 
 	donorToken = given()
 		.contentType("application/json")
@@ -93,6 +107,21 @@ public class APIInterestandAppointmentTests {
 		.then()
 		.statusCode(200)
 		.extract().asString();
+	
+	given()
+	.header("Authorization","Bearer "+donorToken)
+	.contentType("application/json")
+	.body(site)
+	.when().post("/transfer-sites")
+	.then().statusCode(201);
+
+
+	given()
+	.header("Authorization","Bearer "+donorToken)
+	.contentType("application/json")
+	.body(item)
+	.when().post("/items")
+	.then().statusCode(201);
 
 		itemId = given()
 		.header("Authorization","Bearer "+donorToken)

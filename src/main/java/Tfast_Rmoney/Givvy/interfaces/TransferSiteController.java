@@ -11,6 +11,7 @@ import Tfast_Rmoney.Givvy.services.TransferSiteService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,7 +27,7 @@ public class TransferSiteController {
 
     // POST /transfer-sites
     @PostMapping
-    public ResponseEntity<String> createTransferSite(@RequestBody CreateTransferSiteRequest request) {
+    public ResponseEntity<String> createTransferSite(Authentication authentication, @RequestBody CreateTransferSiteRequest request) {
 
         if (request.getName() == null || request.getName().isBlank()
                 || request.getAddressOne() == null || request.getAddressOne().isBlank()

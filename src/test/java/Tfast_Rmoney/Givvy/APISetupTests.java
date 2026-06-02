@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import Tfast_Rmoney.Givvy.interfaces.dtos.RegisterUserRequest;
 
@@ -17,7 +18,7 @@ import Tfast_Rmoney.Givvy.interfaces.dtos.RegisterUserRequest;
 import io.restassured.RestAssured;
 
 @SpringBootTest(classes=GivvyApplication.class,webEnvironment = WebEnvironment.DEFINED_PORT)
-//@ActiveProfiles("test")
+@ActiveProfiles("test")
 public class APISetupTests {
 
 private static RegisterUserRequest testDonor;
