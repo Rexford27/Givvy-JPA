@@ -10,34 +10,46 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.ActiveProfiles;
 
+import Tfast_Rmoney.Givvy.interfaces.dtos.RegisterUserRequest;
+
+
 
 import io.restassured.RestAssured;
 
 @SpringBootTest(classes=GivvyApplication.class,webEnvironment = WebEnvironment.DEFINED_PORT)
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 public class APISetupTests {
+
+private static RegisterUserRequest testDonor;
+private static RegisterUserRequest testRecipient1;
+private static RegisterUserRequest testRecipient2;
+
     @BeforeAll
 	public static void setup() {
 		RestAssured.port = 8085;
 		RestAssured.baseURI = "http://localhost";
 			
-		testSeller = new UserDTO();
-		testSeller.setName("TestSeller");
-		testSeller.setPassword("hello");
+		testDonor = new RegisterUserRequest();
+		testDonor.setName("TestDonor");
+                testDonor.setEmail("donor@example.com");
+		testDonor.setPassword("password");
 			
-		testBuyerOne = new UserDTO();
-		testBuyerOne.setName("BuyerOne");
-		testBuyerOne.setPassword("hello");
-		testBuyerTwo = new UserDTO();
-		testBuyerTwo.setName("BuyerTwo");
-		testBuyerTwo.setPassword("hello");
+		testRecipient1 = new RegisterUserRequest();
+		testRecipient1.setName("Recipient1");
+                testRecipient1.setEmail("recipient1@example.com");
+		testRecipient1.setPassword("password2");
+
+		testRecipient2 = new RegisterUserRequest();
+		testRecipient2.setName("Recipient2");
+		testRecipient2.setEmail("recipient2@example.com");
+		testRecipient2.setPassword("password3");
 	}
 	
 	@Test
 	public void postSeller() {
 		given()
 		.contentType("application/json")
-		.body(testSeller)
+		.body(testDonor)
 		.when().post("/users").then()
 		.statusCode(anyOf(is(201),is(409)));
 	}
@@ -46,13 +58,13 @@ public class APISetupTests {
 	public void postBuyers() {
 		given()
 		.contentType("application/json")
-		.body(testBuyerOne)
+		.body(testRecipient1)
 		.when().post("/users").then()
 		.statusCode(anyOf(is(201),is(409)));
 		
 		given()
 		.contentType("application/json")
-		.body(testBuyerTwo)
+		.body(testRecipient2)
 		.when().post("/users").then()
 		.statusCode(anyOf(is(201),is(409)));
 	}

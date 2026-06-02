@@ -31,18 +31,13 @@ public class UserController {
     private final ItemService itemService;
     private final JwtService jwtService;
 
-<<<<<<< HEAD
-    public UserController(UserService userService, ItemService itemService, JwtService jwtService) {
-=======
-    // I need JwtService because after a user logs in, I want to create a JWT token for them.
-    private final JwtService jwtService;
+    
 
     public UserController(
             UserService userService,
             ItemService itemService,
             JwtService jwtService
     ) {
->>>>>>> b00f398 (security working checkpoint)
         this.userService = userService;
         this.itemService = itemService;
         this.jwtService = jwtService;
@@ -76,18 +71,12 @@ public class UserController {
                     .body("Invalid email or password");
         }
 
-<<<<<<< HEAD
-        String token = jwtService.makeJwt(result.get().getUserId().toString());
-        return ResponseEntity.ok(token);
-        // return ResponseEntity.ok(result.get().getUserId().toString());
-=======
         // If login is successful, I create a JWT using this user's id.
         // This token is what the user will send on future protected requests.
         String token = jwtService.makeJwt(result.get().getUserId().toString());
 
         // I return the token instead of returning just the user id.
         return ResponseEntity.ok(token);
->>>>>>> b00f398 (security working checkpoint)
     }
 
     // POST /users

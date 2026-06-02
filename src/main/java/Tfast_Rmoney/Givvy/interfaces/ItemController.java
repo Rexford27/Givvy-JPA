@@ -30,7 +30,7 @@ public class ItemController {
     }
 
 
-    @GetMapping
+    @GetMapping("/donor")
     public ResponseEntity<List<ItemResponse>> getItemsByDonor(Authentication authentication){
         AuctionUserDetails details = (AuctionUserDetails) authentication.getPrincipal();
         List<Item> items = itemService.findItemsByUser(UUID.fromString(details.getUsername()));
@@ -222,9 +222,6 @@ public class ItemController {
         }
     }
 
-<<<<<<< HEAD
-}
-=======
     private List<ItemResponse> convertToResponseList(List<Item> items) {
         List<ItemResponse> response = new ArrayList<>();
 
@@ -235,4 +232,3 @@ public class ItemController {
         return response;
     }
 }
->>>>>>> b00f398 (security working checkpoint)
